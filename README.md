@@ -5,12 +5,12 @@ Install ngt on nuranix linux guest vm.
 
 ## Role Variables
 
-| Variable                | Required | Default | Choices                   | Comments                                 |
-|-------------------------|----------|---------|---------------------------|------------------------------------------|
-| nutanix_prism_user      | yes      |         | | usernema for the api. You can use  format 'user@domain.local' for AD user          |
-| nutanix_prism_password  | yes      |         | | example variable                         |
-| nutanix_prism_element_url| yes     | https://example.domain.com:9440 |   |  Url of Prism element                      |
-| vm_name                 | no      |   inventory_hostname      |   | VM name in Nutanix prism                       |
+| Variable                | Required | Default |  Comments                                 |
+|-------------------------|----------|---------|------------------------------------------|
+| nutanix_prism_user      | yes      |         | username for the api. You can use  format 'user@domain.local' for AD user          |
+| nutanix_prism_password  | yes      |         | example variable                         |
+| nutanix_prism_element_url| yes     | https://example.domain.com:9440 | Url of Prism element                      |
+| vm_name                 | no      |   inventory_hostname      | VM name in Nutanix prism                       |
 
 
 ## Example Playbook
