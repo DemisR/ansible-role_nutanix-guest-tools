@@ -1,0 +1,8 @@
+galaxy_info:
+  author: Demis Rizzotto
+  description: Install Nutanix Guest Tools
+
+  platforms:
+  - name: Ubuntu
+    versions:
+    - bionic

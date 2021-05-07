@@ -1,0 +1,5 @@
+nutanix_prism_element_url: https://example.domain.com:9440
+vm_name: "{{ ansible_host }}"
+
+# nutanix_prism_user:
+# nutanix_prism_password:

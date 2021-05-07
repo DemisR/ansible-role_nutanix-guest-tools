@@ -1,0 +1,145 @@
+- name: Get VM UUID
+  uri:
+    method: GET
+    user: "{{ nutanix_prism_user }}"
+    password: "{{ nutanix_prism_password }}"
+    url: "{{ nutanix_prism_element_url }}/api/nutanix/v1/vms/?filterCriteria=vm_name=={{ vm_name }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    force_basic_auth: yes
+  register: _nutanix_api_response
+  delay: 3
+  retries: 3
+  until: _nutanix_api_response.status == 200
+  delegate_to: localhost
+  become: no
+
+- name: Enable NGT
+  uri:
+    method: POST
+    user: "{{ nutanix_prism_user }}"
+    password: "{{ nutanix_prism_password }}"
+    url: "{{ nutanix_prism_element_url }}/PrismGateway/services/rest/v1/vms/{{ _nutanix_api_response.json.entities[0].vmId }}/guest_tools"
+    body_format: json
+    body:
+      enabled: true
+      applications:
+        file_level_restore: false
+        vss_snapshot: true
+    return_content: yes
+    validate_certs: no
+    force_basic_auth: yes
+  delegate_to: localhost
+  become: no
+
+- name: Force unmount CDROM
+  uri:
+    method: PUT
+    user: "{{ nutanix_prism_user }}"
+    password: "{{ nutanix_prism_password }}"
+    url: "{{ nutanix_prism_element_url }}/api/nutanix/v0.8/vms/{{ _nutanix_api_response.json.entities[0].uuid }}/disks/ide-3"
+    body_format: json
+    body:
+      flashModeEnabled: false
+      updateSpec:
+        isEmpty: true
+    return_content: yes
+    validate_certs: no
+    force_basic_auth: yes
+  delegate_to: localhost
+  become: no
+
+- name: Wait unmount CDROM
+  pause:
+    seconds: 10
+
+- name: Mount NGT
+  uri:
+    method: POST
+    user: "{{ nutanix_prism_user }}"
+    password: "{{ nutanix_prism_password }}"
+    url: "{{ nutanix_prism_element_url }}/PrismGateway/services/rest/v1/vms/{{ _nutanix_api_response.json.entities[0].vmId }}/guest_tools/mount"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    force_basic_auth: yes
+  register: _api
+  delay: 5
+  retries: 3
+  until: _api.status == 200
+  delegate_to: localhost
+  become: no
+
+- name: Wait mount CDROM
+  pause:
+    seconds: 10
+
+- name: Install python-setuptools
+  apt:
+    name: python-setuptools
+  become: yes
+
+- name: mount cdrom
+  mount:
+    path: /mnt
+    src: /dev/sr0
+    state: mounted
+    opts: ro,noauto
+    fstype: iso9660
+  become: yes
+
+- name: Run the python script to install NGT Tool
+  command:  /mnt/installer/linux/install_ngt.py
+  become: yes
+
+- name: pre_freeze
+  template:
+    dest: /usr/local/sbin/pre_freeze
+    src: pre_freeze.j2
+    owner: root
+    group: root
+    mode: 0700
+  become: yes
+
+- name: post_thaw
+  template:
+    dest: /usr/local/sbin/post_thaw
+    src: post_thaw.j2
+    owner: root
+    group: root
+    mode: 0700
+  become: yes
+
+- name:  check service ngt
+  service:
+    name: ngt_guest_agent
+    state: started
+    enabled: true
+  register: _ngt_guest_agent_service
+  until: _ngt_guest_agent_service.status.ActiveState == "active"
+  retries: 3
+  delay: 10
+  become: yes
+  
+- name: unmount cdrom
+  mount:
+    path: /mnt
+    src: /dev/sr0
+    state: absent
+    opts: ro,noauto
+    fstype: iso9660
+  become: yes
+
+- name: Unmount NGT
+  uri:
+    method: POST
+    user: "{{ nutanix_prism_user }}"
+    password: "{{ nutanix_prism_password }}"
+    url: "{{ nutanix_prism_element_url }}/PrismGateway/services/rest/v1/vms/{{ _nutanix_api_response.json.entities[0].vmId }}/guest_tools/unmount"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    force_basic_auth: yes
+  delegate_to: localhost
+  become: no
