@@ -13,7 +13,7 @@ Install ngt on nuranix linux guest vm.
 | vm_name                 | no      |   inventory_hostname      |   | VM name in Nutanix prism                       |
 
 
-## Playbook example
+## Example Playbook
 
 Prompt credentails for Nutanix Prism API
 
